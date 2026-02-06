@@ -1,3 +1,7 @@
+/*
+  src/components/Profile.jsx — Page profil utilisateur
+  - Récupère les infos via /api/auth/me et affiche le profil
+*/
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";

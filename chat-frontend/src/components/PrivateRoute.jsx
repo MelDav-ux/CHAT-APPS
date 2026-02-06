@@ -1,3 +1,8 @@
+/*
+  src/components/PrivateRoute.jsx — protège les routes React
+  - Vérifie `/api/auth/me` avec le token localStorage
+  - Redirige vers /login si non authentifié
+*/
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
@@ -30,7 +35,7 @@ function PrivateRoute({ children }) {
         check();
     }, []);
 
-    if (checking) return null;
+    if (checking) return <div style={{padding:24, textAlign:'center'}}>Vérification de l'authentification...</div>;
     return authed ? children : <Navigate to="/login" replace />;
 }
 

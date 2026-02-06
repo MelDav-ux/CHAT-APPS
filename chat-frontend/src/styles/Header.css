@@ -1,0 +1,40 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 36px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+}
+
+.header-logo {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+  font-size:18px;
+  color:#111827;
+}
+
+.logo-icon{
+  width:26px;
+  height:26px;
+  flex:0 0 26px;
+}
+
+.logo-text{font-weight:700}
+
+.logo-highlight{color:#4f46e5}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 12px 16px;
+  }
+
+  .header-logo {
+    font-size: 16px;
+  }
+
+  /* Ajustement des boutons dans le header sur mobile */
+  .app-header .btn { font-size: 12px; padding: 6px 10px; }
+}

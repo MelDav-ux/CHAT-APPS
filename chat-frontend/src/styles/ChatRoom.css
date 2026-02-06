@@ -1,69 +1,50 @@
-.chat-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #f0f2f5; /* même fond que login/register */
-}
+/* Layout shell */
+.chat-shell{display:grid;grid-template-columns:280px 1fr 260px;gap:20px;padding:28px;height:100vh;background:linear-gradient(180deg,#f7fbff 0%, #f3f7fb 100%)}
 
-.chat-card {
-  background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 600px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
+/* Sidebar (left) */
+.sidebar{background:var(--surface);border-radius:12px;padding:18px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+.sidebar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sidebar-create{margin-bottom:12px}
+.rooms-list{list-style:none;margin:0;padding:0;overflow:auto}
+.room-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;cursor:pointer;color:var(--text);margin-bottom:8px}
+.room-item:hover{background:rgba(79,70,229,0.04)}
+.room-item.active{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
+.room-title{font-weight:600}
+.room-meta{font-size:12px;color:var(--muted)}
+.sidebar-footer{margin-top:auto;display:flex;justify-content:center}
 
-.chat-card h2 {
-  margin-bottom: 15px;
-  color: #333;
-  text-align: center;
-}
+/* Main column */
+.main-column{background:transparent;display:flex;flex-direction:column}
+.chat-header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.chat-title{margin:0;font-size:18px}
+.chat-sub{font-size:13px;color:var(--muted)}
+.chat-actions .btn{margin-left:8px}
 
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  background: #fafafa;
-}
+.messages-panel{flex:1;overflow:auto;padding:18px;background:transparent;border-radius:10px}
+.empty{color:var(--muted);padding:18px;text-align:center}
 
-.messages p {
-  background: #f0f2f5;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 5px 0;
-  font-size: 14px;
-}
+.message{max-width:70%;margin-bottom:6px;padding:8px 12px;border-radius:10px;background:#f0f2f5}
+.message.mine{margin-left:auto;background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
+.message.group-first{margin-top:12px}
+.message.group-cont{margin-top:2px}
+.message-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;color:var(--muted)}
+.message-author{font-weight:700}
+.message-time{font-size:11px}
+.message-body{font-size:15px}
+.typing-indicator{font-size:13px;color:var(--muted);padding:6px 0}
+.message-composer textarea{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);resize:none;min-height:48px;max-height:140px}
+.message-composer textarea:focus{outline:none;box-shadow:0 0 0 4px rgba(79,70,229,0.06)}
+.message-composer{display:flex;gap:10px;padding:12px 0;align-items:center}
+.message-composer input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06)}
 
-.chat-input {
-  display: flex;
-  gap: 10px;
-}
+/* Right column */
+.right-column{background:var(--surface);border-radius:12px;padding:16px;box-shadow:var(--shadow-lg);}
+.participants h4{margin-top:0}
+.participant-item{display:flex;gap:10px;padding:8px 6px;border-bottom:1px solid #f1f5f9;align-items:center}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.participant-name{font-weight:600}
+.participant-email{font-size:12px;color:var(--muted)}
 
-.chat-input input {
-  flex: 1;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
+/* Responsive */
+@media (max-width: 900px){.chat-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}.right-column{display:none}.sidebar{order:0}.main-column{order:1;margin-top:8px}.sidebar-footer{display:flex;justify-content:center}}
 
-.chat-input button {
-  padding: 12px 20px;
-  background: #25d366; /* vert WhatsApp-style */
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.chat-input button:hover {
-  background: #20b954;
-}

@@ -1,0 +1,50 @@
+/* Design tokens / variables */
+:root{
+  --bg: #f7fbff;
+  --surface: #ffffff;
+  --muted: #94a3b8;
+  --text: #0f172a;
+  --primary: #4f46e5; /* indigo */
+  --primary-600: #434190;
+  --accent: #06b6d4; /* cyan */
+  --danger: #ef4444;
+  --radius: 12px;
+  --shadow-lg: 0 12px 30px rgba(16,24,40,0.06);
+  --transition-fast: 180ms cubic-bezier(.2,.9,.3,1);
+}
+
+/* Dark mode tokens (optional) */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg: #071026;
+    --surface: #071026;
+    --muted: #9aa6b2;
+    --text: #e6eef6;
+    --primary: #7c5cff;
+    --accent: #06b6d4;
+  }
+}
+
+/* Basic base styles */
+html,body,#root{height:100%}
+body{
+  margin:0;
+  font-family: 'Inter', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Utility */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{border-radius:10px;padding:10px 14px;border:none;cursor:pointer;transition:all var(--transition-fast)}
+/* Bouton principal — utilise la palette et un padding légèrement plus large */
+.btn-primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+.btn-primary:hover{opacity:0.95}
+/* Bouton fantôme (ghost) — bord discret et padding identique à la page Home */
+.btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.08);padding:10px 14px;border-radius:10px;cursor:pointer}
+.btn-ghost:hover{opacity:0.95}
+
+/* Accessible focus */
+:focus{outline:none;box-shadow:0 0 0 4px rgba(79,70,229,0.12)}

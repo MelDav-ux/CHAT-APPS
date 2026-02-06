@@ -18,6 +18,11 @@
 .logo{font-weight:700;font-size:20px;color:#111827}
 .logo span{color:#4f46e5}
 
+.home-header .header-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:#111827}
+.home-header .logo-icon{width:26px;height:26px;flex:0 0 26px}
+.home-header .logo-text{font-weight:700}
+.home-header .logo-highlight{color:#4f46e5}
+
 .header-buttons{display:flex;gap:12px}
 .btn-primary{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:#fff;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
 .btn-primary:hover{opacity:0.95}

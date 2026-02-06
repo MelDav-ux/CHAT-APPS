@@ -1,3 +1,7 @@
+/*
+  src/components/Home.jsx — Page d'accueil (hero)
+  - Présente l'application et propose les actions Connexion / Inscription
+*/
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Home.css";
@@ -8,7 +12,12 @@ function Home() {
     return (
         <div className="home-container">
             <header className="home-header">
-                <div className="logo">Chat<span>App</span></div>
+                <div className="header-logo">
+                    <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" fill="#4f46e5" />
+                    </svg>
+                    <span className="logo-text">Application de <span className="logo-highlight">chat</span></span>
+                </div>
                 <nav className="header-buttons">
                     <button className="btn-ghost" onClick={() => navigate("/login")}>Connexion</button>
                     <button className="btn-primary" onClick={() => navigate("/register")}>Inscription</button>
