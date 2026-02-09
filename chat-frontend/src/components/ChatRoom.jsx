@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import CreateChatRoomForm from './CreateChatRoomForm';
 import MessageForm from './MessageForm';
+import RoomList from './RoomList';
+import ParticipantList from './ParticipantList';
 import { useToast } from './ToastContext';
 
 function ChatRoom() {
@@ -164,47 +166,33 @@ function ChatRoom() {
         }
     };
 
+    const [showSidebar, setShowSidebar] = useState(false); // Mobile sidebar toggle
+
     return (
         <div className="chat-shell">
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <h3>Salons</h3>
-                    <div>
-                        <button onClick={refreshRooms} className="btn">↻</button>
-                    </div>
-                </div>
+            {/* Mobile Menu Button - visible only on small screens via CSS */}
+            <div className="mobile-header-bar">
+                <button className="btn btn-ghost btn-menu" onClick={() => setShowSidebar(!showSidebar)}>
+                    {showSidebar ? '✕' : '☰'} Salons
+                </button>
+                <div className="mobile-title">{currentRoom ? currentRoom : 'Chat'}</div>
+            </div>
 
-                <div className="sidebar-create">
-                    <CreateChatRoomForm onCreated={refreshRooms} />
-                </div>
-
-                <ul className="rooms-list">
-                    {currentUser && rooms.some(r => r.members?.includes(currentUser._id)) && (
-                        <>
-                            <div className="rooms-section-title">Mes salons</div>
-                            {rooms.filter(r => r.members?.includes(currentUser._id)).map(r => (
-                                <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => joinRoom(r.slug)}>
-                                    <div className="room-title">{r.name}</div>
-                                    <div className="room-meta">{r.membersCount} participants</div>
-                                </li>
-                            ))}
-                        </>
-                    )}
-
-                    <div className="rooms-section-title">Autres salons</div>
-                    {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).length === 0 && <div className="empty" style={{ padding: '10px 0', fontSize: '0.8rem' }}>Aucun autre salon</div>}
-                    {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).map(r => (
-                        <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => joinRoom(r.slug)}>
-                            <div className="room-title">{r.name}</div>
-                            <div className="room-meta">{r.membersCount} participants</div>
-                        </li>
-                    ))}
-                </ul>
-
-                <div className="sidebar-footer">
-                    <button onClick={handleLogout} className="btn btn-ghost">Déconnexion</button>
-                </div>
-            </aside>
+            <div className={`sidebar-wrapper ${showSidebar ? 'mobile-visible' : ''}`}>
+                <RoomList
+                    rooms={rooms}
+                    currentRoom={currentRoom}
+                    currentUser={currentUser}
+                    onJoin={(slug) => {
+                        joinRoom(slug);
+                        setShowSidebar(false); // Close sidebar on selection/mobile
+                    }}
+                    onLogout={handleLogout}
+                    onRefresh={refreshRooms}
+                />
+                {/* Overlay for mobile to close sidebar when clicking outside */}
+                {showSidebar && <div className="sidebar-overlay" onClick={() => setShowSidebar(false)}></div>}
+            </div>
 
             <main className="main-column">
                 <div className="chat-header">
@@ -258,23 +246,7 @@ function ChatRoom() {
                 />
             </main>
 
-            <aside className="right-column">
-                <div className="participants">
-                    <h4>Participants</h4>
-                    {usersInRoom.length === 0 && <div className="muted">Aucun participant</div>}
-                    <ul>
-                        {usersInRoom.map(u => (
-                            <li key={u.id} className="participant-item">
-                                <div className="avatar">{(u.username || u.email)[0]?.toUpperCase()}</div>
-                                <div className="participant-info">
-                                    <div className="participant-name">{u.username || u.email}</div>
-                                    <div className="participant-email">{u.email}</div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </aside>
+            <ParticipantList users={usersInRoom} />
         </div>
     );
 }
