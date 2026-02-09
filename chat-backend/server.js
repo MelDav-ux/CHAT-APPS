@@ -14,6 +14,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/auth"); // Vérifie que ce fichier existe bien
 const roomsRoutes = require("./routes/rooms");
 const ChatRoom = require("./models/ChatRoom");
+const Message = require("./models/Message");
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -82,7 +83,14 @@ io.on("connection", (socket) => {
     const broadcastRoomsUpdate = async () => {
         try {
             const rooms = await ChatRoom.find().select('name slug members');
-            const payload = rooms.map(r => ({ id: r._id, name: r.name, slug: r.slug, membersCount: r.members.length }));
+            // Important : on renvoie aussi la liste des membres (IDs) pour que le frontend puisse filtrer "Mes salons"
+            const payload = rooms.map(r => ({
+                id: r._id,
+                name: r.name,
+                slug: r.slug,
+                membersCount: r.members.length,
+                members: r.members // Array d'ObjectIds
+            }));
             io.emit('rooms:update', payload);
         } catch (err) {
             console.error('Broadcast rooms update error:', err);
@@ -101,7 +109,7 @@ io.on("connection", (socket) => {
         }
     };
 
-    // Rejoindre une salle: met à jour la DB, join le socket et notifie
+    // Rejoindre une salle: met à jour la DB, join le socket, notifie et envoie l'historique
     socket.on('joinRoom', async (roomSlug) => {
         try {
             const room = await ChatRoom.findOne({ slug: roomSlug });
@@ -118,6 +126,13 @@ io.on("connection", (socket) => {
 
             socket.join(roomSlug);
             console.log(`Utilisateur ${socket.user.email || socket.user.id} (${socket.id}) a rejoint ${roomSlug}`);
+
+            // Envoyer l'historique des messages (les 50 derniers)
+            const history = await Message.find({ room: roomSlug })
+                .sort({ createdAt: -1 })
+                .limit(50);
+            // On renvoie dans l'ordre chronologique
+            socket.emit('room:history', history.reverse());
 
             await emitRoomUsers(roomSlug);
             await broadcastRoomsUpdate();
@@ -156,15 +171,31 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("chatMessage", (msg) => {
-        const message = {
-            room: msg.room,
-            text: msg.text,
-            user: socket.user ? (socket.user.email || socket.user.id) : null,
-            createdAt: new Date(),
-            tempId: msg.tempId || null
-        };
-        io.to(msg.room).emit("message", message);
+    socket.on("chatMessage", async (msg) => {
+        try {
+            const user = {
+                id: socket.user.id,
+                email: socket.user.email,
+                username: socket.user.username
+            };
+
+            const newMessage = new Message({
+                room: msg.room,
+                text: msg.text,
+                user: user,
+                createdAt: new Date()
+            });
+
+            const savedMessage = await newMessage.save();
+
+            // Attacher le tempId pour le client qui l'a envoyé (confirmation)
+            const messageToSend = savedMessage.toObject();
+            if (msg.tempId) messageToSend.tempId = msg.tempId;
+
+            io.to(msg.room).emit("message", messageToSend);
+        } catch (err) {
+            console.error("Erreur lors de l'envoi du message:", err);
+        }
     });
 
     socket.on("disconnect", async () => {

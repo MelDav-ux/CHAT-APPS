@@ -9,17 +9,17 @@ import "../styles/ChatRoom.css";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import CreateChatRoomForm from './CreateChatRoomForm';
+import MessageForm from './MessageForm';
 import { useToast } from './ToastContext';
 
 function ChatRoom() {
     const [currentRoom, setCurrentRoom] = useState(null);
-    const [message, setMessage] = useState("");
+    // const [message, setMessage] = useState(""); // géré dans MessageForm désormais
     const [messages, setMessages] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [usersInRoom, setUsersInRoom] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
-    const [search, setSearch] = useState('');
-    const [lastMessages, setLastMessages] = useState({});    const navigate = useNavigate();
+    const navigate = useNavigate();
     const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
     const { showToast } = useToast();
@@ -47,6 +47,10 @@ function ChatRoom() {
 
         s.on('rooms:update', (payload) => {
             setRooms(payload);
+        });
+
+        s.on('room:history', (history) => {
+            setMessages(history);
         });
 
         s.on('room:users', ({ slug, users }) => {
@@ -77,9 +81,8 @@ function ChatRoom() {
                 return [...prev, msg];
             });
 
-            // mettre à jour aperçu dernier message pour le salon
-            setLastMessages(lm => ({ ...lm, [msg.room]: { text: msg.text, time: msg.createdAt } }));
         });
+
 
         s.on("connect_error", (err) => {
             if (err && err.message === "Authentication error") {
@@ -114,8 +117,16 @@ function ChatRoom() {
     const typingTimeoutRef = useRef(null);
     const [typingUsers, setTypingUsers] = useState({});
 
-    const handleTyping = () => {
+    const handleTyping = (isTyping) => {
         if (!socketRef.current || !currentRoom) return;
+        // Si isTyping est explicitement false (envoi de message), on envoie false direct
+        if (isTyping === false) {
+            socketRef.current.emit('typing', { roomSlug: currentRoom, typing: false });
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            return;
+        }
+
+        // Sinon, c'est que ça tape
         socketRef.current.emit('typing', { roomSlug: currentRoom, typing: true });
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
@@ -131,11 +142,10 @@ function ChatRoom() {
         showToast(`Vous avez quitté ${slug}`, { type: 'info' });
     };
 
-    const sendMessage = () => {
+    const sendMessage = (text) => {
         if (!currentRoom) return showToast('Rejoignez un salon pour envoyer un message', { type: 'error' });
-        if (message.trim() && socketRef.current) {
-            socketRef.current.emit("chatMessage", { room: currentRoom, text: message });
-            setMessage("");
+        if (socketRef.current) {
+            socketRef.current.emit("chatMessage", { room: currentRoom, text: text });
         }
     };
 
@@ -169,7 +179,21 @@ function ChatRoom() {
                 </div>
 
                 <ul className="rooms-list">
-                    {rooms.map(r => (
+                    {currentUser && rooms.some(r => r.members?.includes(currentUser._id)) && (
+                        <>
+                            <div className="rooms-section-title">Mes salons</div>
+                            {rooms.filter(r => r.members?.includes(currentUser._id)).map(r => (
+                                <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => joinRoom(r.slug)}>
+                                    <div className="room-title">{r.name}</div>
+                                    <div className="room-meta">{r.membersCount} participants</div>
+                                </li>
+                            ))}
+                        </>
+                    )}
+
+                    <div className="rooms-section-title">Autres salons</div>
+                    {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).length === 0 && <div className="empty" style={{ padding: '10px 0', fontSize: '0.8rem' }}>Aucun autre salon</div>}
+                    {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).map(r => (
                         <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => joinRoom(r.slug)}>
                             <div className="room-title">{r.name}</div>
                             <div className="room-meta">{r.membersCount} participants</div>
@@ -198,15 +222,20 @@ function ChatRoom() {
 
                     {messages.map((msg, i) => {
                         const prev = messages[i - 1];
-                        const isFirstOfGroup = !prev || prev.user !== msg.user || (new Date(msg.createdAt) - new Date(prev.createdAt) > 1000 * 60 * 2);
-                        const me = currentUser && (msg.user === (currentUser.username || currentUser.email));
+                        // user peut être un objet (backend nouveau) ou string (ancien/compatibilité)
+                        // On normalise :
+                        const msgUser = typeof msg.user === 'object' ? (msg.user.username || msg.user.email) : msg.user;
+                        const prevUser = prev ? (typeof prev.user === 'object' ? (prev.user.username || prev.user.email) : prev.user) : null;
+
+                        const isFirstOfGroup = !prev || prevUser !== msgUser || (new Date(msg.createdAt) - new Date(prev.createdAt) > 1000 * 60 * 2);
+                        const me = currentUser && (msgUser === (currentUser.username || currentUser.email));
 
                         return (
                             <div key={i} className={`message ${me ? 'mine' : ''} ${isFirstOfGroup ? 'group-first' : 'group-cont'}`}>
                                 {isFirstOfGroup && (
                                     <div className="message-meta">
-                                        <div className="message-author">{msg.user || 'Anonyme'}</div>
-                                        <div className="message-time">{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        <div className="message-author">{msgUser || 'Anonyme'}</div>
+                                        <div className="message-time">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                     </div>
                                 )}
                                 <div className="message-body">{msg.text}</div>
@@ -221,10 +250,12 @@ function ChatRoom() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="message-composer">
-                    <textarea value={message} onChange={(e) => { setMessage(e.target.value); handleTyping(); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} placeholder={currentRoom ? 'Écrire un message...' : 'Rejoignez un salon pour écrire...'} />
-                    <button className="btn btn-primary" onClick={sendMessage} disabled={!currentRoom || !message.trim()}>Envoyer</button>
-                </div>
+                <MessageForm
+                    onSendMessage={sendMessage}
+                    onTyping={(isTyping) => handleTyping(isTyping)}
+                    disabled={!currentRoom}
+                    placeholder={currentRoom ? 'Écrire un message...' : 'Rejoignez un salon pour écrire...'}
+                />
             </main>
 
             <aside className="right-column">

@@ -3,9 +3,9 @@
   - Gère l'envoi des identifiants et stocke le token en localStorage
   - Utilise `showToast` pour notifier l'utilisateur
 */
-import React, { useState } from "react"; 
-import axios from "axios"; 
-import { useNavigate, Link } from "react-router-dom"; 
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import "../styles/LoginForm.css";

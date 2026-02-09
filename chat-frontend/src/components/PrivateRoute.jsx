@@ -35,7 +35,7 @@ function PrivateRoute({ children }) {
         check();
     }, []);
 
-    if (checking) return <div style={{padding:24, textAlign:'center'}}>Vérification de l'authentification...</div>;
+    if (checking) return <div style={{ padding: 24, textAlign: 'center' }}>Vérification de l'authentification...</div>;
     return authed ? children : <Navigate to="/login" replace />;
 }
 

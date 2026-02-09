@@ -97,7 +97,7 @@ function RegisterForm() {
                             <p className="switch-link" style={{ margin: 0 }}>Déjà inscrit ? <Link to="/login">Se connecter</Link></p>
                             <button type="button" className="btn btn-ghost" onClick={async () => {
                                 try {
-                                    await axios.get('http://localhost:5000/api/auth/health');
+                                    await axios.get('http://localhost:4000/api/auth/health');
                                     showToast('Backend joignable — OK', { type: 'success' });
                                 } catch (err) {
                                     console.error('Health check failed:', err);
