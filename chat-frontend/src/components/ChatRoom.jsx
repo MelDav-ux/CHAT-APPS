@@ -26,8 +26,13 @@ function ChatRoom() {
     const messagesEndRef = useRef(null);
     const { showToast } = useToast();
 
+    // Use ref to access current state inside socket listeners without re-running effect
+    const currentRoomRef = useRef(currentRoom);
     useEffect(() => {
-        // Charger la liste des salons et l'utilisateur courant
+        currentRoomRef.current = currentRoom;
+    }, [currentRoom]);
+
+    useEffect(() => {
         const fetchInitial = async () => {
             try {
                 const [roomsRes, meRes] = await Promise.all([
@@ -40,10 +45,14 @@ function ChatRoom() {
                 console.error('Init fetch error:', err);
             }
         };
-
         fetchInitial();
 
         const token = localStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
+            return;
+        }
+
         const s = io("http://localhost:5000", { auth: { token } });
         socketRef.current = s;
 
@@ -56,11 +65,13 @@ function ChatRoom() {
         });
 
         s.on('room:users', ({ slug, users }) => {
-            if (currentRoom && currentRoom === slug) setUsersInRoom(users);
+            if (currentRoomRef.current && currentRoomRef.current === slug) {
+                setUsersInRoom(users);
+            }
         });
 
         s.on('room:typing', ({ slug, user, typing }) => {
-            if (currentRoom && currentRoom === slug) {
+            if (currentRoomRef.current && currentRoomRef.current === slug) {
                 setTypingUsers(prev => {
                     const next = { ...prev };
                     if (typing) next[user.username || user.email] = true;
@@ -72,19 +83,14 @@ function ChatRoom() {
 
         s.on("message", (msg) => {
             setMessages((prev) => {
-                // si message echo d'un envoi local (tempId), remplacer le temporaire
                 if (msg.tempId) {
                     const replaced = prev.map(m => (m.tempId === msg.tempId ? { ...msg } : m));
-                    // si pas trouvé, l'ajouter
                     const found = prev.some(m => m.tempId === msg.tempId);
                     return found ? replaced : [...replaced, msg];
                 }
-                // sinon ajouter normalement
                 return [...prev, msg];
             });
-
         });
-
 
         s.on("connect_error", (err) => {
             if (err && err.message === "Authentication error") {
@@ -97,9 +103,11 @@ function ChatRoom() {
             s.off("message");
             s.off('rooms:update');
             s.off('room:users');
+            s.off('room:typing');
+            s.off('room:history');
             s.disconnect();
         };
-    }, [navigate, currentRoom]);
+    }, [navigate]); // Removed currentRoom dependency to prevent reconnection loops
 
     useEffect(() => {
         // faire défiler vers le bas à chaque nouveau message
@@ -211,22 +219,41 @@ function ChatRoom() {
                     {messages.map((msg, i) => {
                         const prev = messages[i - 1];
                         // user peut être un objet (backend nouveau) ou string (ancien/compatibilité)
-                        // On normalise :
+                        // On normalise le nom à afficher :
                         const msgUser = typeof msg.user === 'object' ? (msg.user.username || msg.user.email) : msg.user;
                         const prevUser = prev ? (typeof prev.user === 'object' ? (prev.user.username || prev.user.email) : prev.user) : null;
 
+                        // Vérification robuste pour savoir si c'est moi (comparaison ID prioritaire)
+                        const msgUserId = typeof msg.user === 'object' ? (msg.user.id || msg.user._id) : null;
+                        const currentUserId = currentUser ? currentUser._id : null;
+
+                        // Si on a les IDs, on compare les IDs. Sinon fallback sur le nom/email (compatibilité vieux messages)
+                        const me = (msgUserId && currentUserId)
+                            ? (msgUserId === currentUserId)
+                            : (currentUser && msgUser === (currentUser.username || currentUser.email));
+
                         const isFirstOfGroup = !prev || prevUser !== msgUser || (new Date(msg.createdAt) - new Date(prev.createdAt) > 1000 * 60 * 2);
-                        const me = currentUser && (msgUser === (currentUser.username || currentUser.email));
 
                         return (
-                            <div key={i} className={`message ${me ? 'mine' : ''} ${isFirstOfGroup ? 'group-first' : 'group-cont'}`}>
-                                {isFirstOfGroup && (
-                                    <div className="message-meta">
-                                        <div className="message-author">{msgUser || 'Anonyme'}</div>
-                                        <div className="message-time">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            <div key={i} className={`message-row ${me ? 'me' : 'other'} ${isFirstOfGroup ? 'first' : ''}`}>
+                                {!me && (
+                                    <div className="message-avatar-placeholder">
+                                        {isFirstOfGroup ? (
+                                            <div className="avatar-small">{(msgUser || '?')[0].toUpperCase()}</div>
+                                        ) : <div className="avatar-spacer" />}
                                     </div>
                                 )}
-                                <div className="message-body">{msg.text}</div>
+
+                                <div className="message-content">
+                                    {isFirstOfGroup && !me && <div className="message-sender">{msgUser}</div>}
+
+                                    <div className={`message-bubble ${me ? 'mine' : 'theirs'} ${isFirstOfGroup ? 'bubble-first' : ''}`}>
+                                        <div className="message-text">{msg.text}</div>
+                                        <div className="message-timestamp">
+                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         );
                     })}

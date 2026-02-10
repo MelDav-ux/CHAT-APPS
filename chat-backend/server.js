@@ -97,12 +97,24 @@ io.on("connection", (socket) => {
         }
     };
 
-    // Helper: envoie la liste des utilisateurs présents dans une salle
+    // Helper: envoie la liste des utilisateurs présents dans une salle avec leur statut en ligne
     const emitRoomUsers = async (roomSlug) => {
         try {
             const room = await ChatRoom.findOne({ slug: roomSlug }).populate('members', 'username email');
             if (!room) return;
-            const users = room.members.map(u => ({ id: u._id, username: u.username, email: u.email }));
+
+            // Récupérer les sockets connectés à cette room
+            const socketsInRoom = await io.in(roomSlug).fetchSockets();
+            const onlineUserIds = socketsInRoom.map(s => s.user?.id).filter(Boolean);
+
+            // Marquer les utilisateurs en ligne
+            const users = room.members.map(u => ({
+                id: u._id,
+                username: u.username,
+                email: u.email,
+                online: onlineUserIds.includes(u._id.toString())
+            }));
+
             io.to(roomSlug).emit('room:users', { slug: roomSlug, users });
         } catch (err) {
             console.error('Emit room users error:', err);
@@ -142,12 +154,13 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Quitter une salle
+    // Quitter une salle explicitement
     socket.on('leaveRoom', async (roomSlug) => {
         try {
             const room = await ChatRoom.findOne({ slug: roomSlug });
             if (!room) return;
 
+            // Retirer l'utilisateur des membres permanents
             room.members = room.members.filter(m => m.toString() !== socket.user.id);
             await room.save();
 
@@ -199,15 +212,16 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", async () => {
-        console.log(" Utilisateur déconnecté :", socket.id);
+        console.log("👋 Utilisateur déconnecté :", socket.id);
         try {
-            // Retirer l'utilisateur de toutes les salles où il figurait
-            await ChatRoom.updateMany({ members: socket.user.id }, { $pull: { members: socket.user.id } });
-            // Pour chaque salle, notifier la liste d'utilisateurs mise à jour
-            const rooms = await ChatRoom.find({}).select('slug members');
-            for (const r of rooms) {
-                await emitRoomUsers(r.slug);
+            // Récupérer toutes les rooms où l'utilisateur était connecté
+            const userRooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+
+            // Pour chaque salon, simplement mettre à jour la liste (l'utilisateur y reste membre mais apparaît offline)
+            for (const roomSlug of userRooms) {
+                await emitRoomUsers(roomSlug);
             }
+
             await broadcastRoomsUpdate();
         } catch (err) {
             console.error('Disconnect cleanup error:', err);

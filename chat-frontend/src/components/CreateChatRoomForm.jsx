@@ -30,9 +30,30 @@ function CreateChatRoomForm({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du salon" className="form-input" />
-      <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Création...' : 'Créer'}</button>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Nouveau salon..."
+        className="form-input"
+        style={{
+          width: '100%',
+          padding: '10px 14px',
+          borderRadius: 12,
+          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'rgba(255,255,255,0.05)',
+          color: '#fff',
+          boxSizing: 'border-box'
+        }}
+      />
+      <button
+        className="btn btn-primary"
+        type="submit"
+        disabled={loading}
+        style={{ width: '100%', borderRadius: 12, padding: '10px' }}
+      >
+        {loading ? 'Création...' : 'Créer'}
+      </button>
     </form>
   );
 }

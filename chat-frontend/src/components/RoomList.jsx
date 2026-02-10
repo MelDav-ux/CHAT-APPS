@@ -22,19 +22,29 @@ function RoomList({ rooms, currentRoom, currentUser, onJoin, onLogout, onRefresh
                         <div className="rooms-section-title">Mes salons</div>
                         {rooms.filter(r => r.members?.includes(currentUser._id)).map(r => (
                             <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => onJoin(r.slug)}>
-                                <div className="room-title">{r.name}</div>
-                                <div className="room-meta">{r.membersCount} participants</div>
+                                <div className="room-icon-wrapper">
+                                    <div className="room-icon-text">{(r.name || '#').substring(0, 2).toUpperCase()}</div>
+                                </div>
+                                <div className="room-info-col">
+                                    <div className="room-title">{r.name}</div>
+                                    <div className="room-meta">{r.membersCount} participants</div>
+                                </div>
                             </li>
                         ))}
                     </>
                 )}
 
                 <div className="rooms-section-title">Autres salons</div>
-                {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).length === 0 && <div className="empty" style={{ padding: '10px 0', fontSize: '0.8rem' }}>Aucun autre salon</div>}
+                {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).length === 0 && <div className="empty" style={{ padding: '0 12px', fontSize: '0.8rem', opacity: 0.6 }}>Aucun autre salon</div>}
                 {rooms.filter(r => !currentUser || !r.members?.includes(currentUser._id)).map(r => (
                     <li key={r.slug} className={`room-item ${currentRoom === r.slug ? 'active' : ''}`} onClick={() => onJoin(r.slug)}>
-                        <div className="room-title">{r.name}</div>
-                        <div className="room-meta">{r.membersCount} participants</div>
+                        <div className="room-icon-wrapper">
+                            <div className="room-icon-text">{(r.name || '#').substring(0, 2).toUpperCase()}</div>
+                        </div>
+                        <div className="room-info-col">
+                            <div className="room-title">{r.name}</div>
+                            <div className="room-meta">{r.membersCount} participants</div>
+                        </div>
                     </li>
                 ))}
             </ul>
