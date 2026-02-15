@@ -1,6 +1,5 @@
 import React from "react";
 import CreateChatRoomForm from './CreateChatRoomForm';
-import { useNavigate } from "react-router-dom";
 
 function RoomList({ rooms, currentRoom, currentUser, onJoin, onLogout, onRefresh }) {
     return (

@@ -14,7 +14,7 @@ function CreateChatRoomForm({ onCreated }) {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/rooms', { name }, {
+      await axios.post('http://localhost:5000/api/rooms', { name }, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 

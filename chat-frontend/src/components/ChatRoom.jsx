@@ -8,10 +8,9 @@ import { io } from "socket.io-client"; // import de Socket.IO client
 import "../styles/ChatRoom.css";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
-import CreateChatRoomForm from './CreateChatRoomForm';
 import MessageForm from './MessageForm';
 import RoomList from './RoomList';
-import ParticipantList from './ParticipantList';
+import RoomDetails from './RoomDetails';
 import { useToast } from './ToastContext';
 
 function ChatRoom() {
@@ -174,7 +173,11 @@ function ChatRoom() {
         }
     };
 
+
     const [showSidebar, setShowSidebar] = useState(false); // Mobile sidebar toggle
+
+    // Find full room object for details
+    const currentRoomData = rooms.find(r => r.slug === currentRoom) || { name: currentRoom || '...', slug: currentRoom };
 
     return (
         <div className="chat-shell">
@@ -273,7 +276,8 @@ function ChatRoom() {
                 />
             </main>
 
-            <ParticipantList users={usersInRoom} />
+
+            {currentRoom && <RoomDetails room={currentRoomData} users={usersInRoom} />}
         </div>
     );
 }
